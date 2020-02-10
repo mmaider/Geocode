@@ -2,6 +2,12 @@ import pygame
 import requests
 import sys
 import os
+import math
+
+lat_step = 0.008
+lon_step = 0.002
+coords_to_geo_x = 0.0000428
+coords_to_geo_y = 0.0000428
 
 
 class Map(object):
@@ -19,6 +25,21 @@ class Map(object):
                 self.z += 1
             if event.key == pygame.K_PAGEDOWN and self.z > 1:
                 self.z -= 1
+            if pygame.key.get_pressed()[pygame.K_LEFT]:
+                self.lat -= lat_step * math.pow(2, 15 - self.z)
+            if pygame.key.get_pressed()[pygame.K_RIGHT]:
+                self.lat += lat_step * math.pow(2, 15 - self.z)
+            if pygame.key.get_pressed()[pygame.K_UP]:
+                self.lon += lon_step * math.pow(2, 15 - self.z)
+            if pygame.key.get_pressed()[pygame.K_DOWN]:
+                self.lon -= lon_step * math.pow(2, 15 - self.z)
+
+    def screen_to_geo(self, pos):
+        dy = 255 - pos[1]
+        dx = pos[0] - 300
+        lx = self.lon + dx + coords_to_geo_x * math.pow(2, 15 - self.z)
+        ly = self.lat + dy + coords_to_geo_y * math.cos(math.radians(self.lat) * math.pow(2, 15 - self.z))
+        return lx, ly
 
 
 def load_map(mapp):
