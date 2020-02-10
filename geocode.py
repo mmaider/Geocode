@@ -13,6 +13,12 @@ class Map(object):
         self.search_result = None
         self.use_postal_code = False
 
+    def update(self, event):
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_PAGEUP and self.z < 19:
+                self.z += 1
+            if event.key == pygame.K_PAGEDOWN and self.z > 1:
+                self.z -= 1
 
 
 def load_map(mapp):
@@ -42,6 +48,7 @@ def main():
         event = pygame.event.wait()
         if event.type == pygame.QUIT:
             break
+        mapp.update(event)
         map_file = load_map(mapp)
         screen.blit(pygame.image.load(map_file), (0, 0))
 
