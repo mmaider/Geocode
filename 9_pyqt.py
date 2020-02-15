@@ -34,7 +34,7 @@ class Map(QWidget):
 
     def initUI(self):
         self.setGeometry(300, 300, 600, 600)
-        self.setWindowTitle('Задача 5')
+        self.setWindowTitle('Задача 9')
         self.label = QLabel(self)
         self.label.resize(600, 450)
         self.label.move(0, 150)
