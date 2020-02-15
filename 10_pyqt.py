@@ -23,26 +23,25 @@ class Map(QWidget):
         self.z = 11
         self.type = "map"
         self.search_result = None
-        self.index = ''
         # self.use_postal_code = False
         self.name = "map.png"
-        self.address = ''
+        self.addresses = []
+        self.points = ''
         self.pixmap = QPixmap(self.name)
         self.label.setPixmap(self.pixmap)
         self.load_map()
         self.show()
 
     def initUI(self):
-        self.setGeometry(300, 300, 600, 600)
+        self.setGeometry(300, 100, 600, 800)
         self.setWindowTitle('Задача 10')
         self.label = QLabel(self)
         self.label.resize(600, 450)
-        self.label.move(0, 150)
+        self.label.move(0, 350)
         self.label.setFocusPolicy(Qt.StrongFocus)
 
         self.name_input = QLineEdit(self)
         self.name_input.move(10, 10)
-        self.point = ''
 
         self.btn = QPushButton('Искать', self)
         self.btn.resize(self.btn.sizeHint())
@@ -50,11 +49,11 @@ class Map(QWidget):
         self.btn.clicked.connect(self.add_point)
 
         self.address_label = QLabel(self)
-        self.address_label.move(10, 70)
+        self.address_label.move(10, 100)
 
         self.del_btn = QPushButton('Сброс поискового результата', self)
         self.del_btn.resize(self.del_btn.sizeHint())
-        self.del_btn.move(10, 100)
+        self.del_btn.move(10, 70)
         self.del_btn.clicked.connect(self.del_point)
 
         self.use_postal_code = QCheckBox(self)
@@ -63,20 +62,20 @@ class Map(QWidget):
         self.use_postal_code.stateChanged.connect(self.change_postal_code)
 
     def change_postal_code(self):
-        if self.address != '':
+        if self.addresses != '':
             if self.use_postal_code.isChecked():
-                self.address_label.setText(self.address + self.index)
+                self.address_label.setText('\n'.join(el[0] + el[1] for el in self.addresses))
             else:
-                self.address_label.setText(self.address)
+                self.address_label.setText('\n'.join(el[0] for el in self.addresses))
             self.address_label.resize(self.address_label.sizeHint())
 
     def del_point(self):
-        self.point = ''
+        self.points = ''
         self.load_map()
         self.address_label.setText('')
         self.address_label.resize(self.address_label.sizeHint())
         self.index = ''
-        self.address = ''
+        self.addresses = []
 
     def add_point(self):
         address = self.name_input.text()
@@ -91,16 +90,18 @@ class Map(QWidget):
         json_response = response.json()
         toponym = json_response["response"]["GeoObjectCollection"][
             "featureMember"][0]["GeoObject"]
-        self.address = toponym["metaDataProperty"]["GeocoderMetaData"]["text"]
-        self.index = ' ' + toponym["metaDataProperty"]["GeocoderMetaData"]["Address"]["postal_code"]
+        self.addresses.append((toponym["metaDataProperty"]["GeocoderMetaData"]["text"], ' ' + toponym["metaDataProperty"]["GeocoderMetaData"]["Address"]["postal_code"]))
         if self.use_postal_code.isChecked():
-            self.address_label.setText(self.address + self.index)
+            self.address_label.setText('\n'.join(el[0] + el[1] for el in self.addresses))
         else:
-            self.address_label.setText(self.address)
+            self.address_label.setText('\n'.join(el[0] for el in self.addresses))
         self.address_label.resize(self.address_label.sizeHint())
         coodrinates = toponym["Point"]["pos"]
         x, y = coodrinates.split()
-        self.point = '&pt={},{},pm2rdm'.format(x, y)
+        if self.points == '':
+            self.points = f'&pt={x},{y},pm2rdm'
+        else:
+            self.points += f'~{x},{y},pm2rdm'
         self.lat = float(x)
         self.lon = float(y)
         self.load_map()
@@ -145,7 +146,7 @@ class Map(QWidget):
 
     def load_map(self):
         map_request = "http://static-maps.yandex.ru/1.x/?ll={},{}&z={z}&l={type}{pt}".format(
-            self.lat, self.lon, z=self.z, type=self.type, pt=self.point)
+            self.lat, self.lon, z=self.z, type=self.type, pt=self.points)
         response = requests.get(map_request)
         if not response:
             print("Ошибка выполнения запроса:")
